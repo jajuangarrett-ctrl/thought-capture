@@ -7,7 +7,7 @@ export async function appendThought(
   filePath: string,
   item: ThoughtItem,
   capturedAt: Date = new Date()
-): Promise<void> {
+): Promise<string> {
   const path = normalizePath(filePath);
   await ensureParentFolder(app, path);
   const bullet = renderBullet(item, capturedAt);
@@ -17,11 +17,12 @@ export async function appendThought(
     const current = await app.vault.read(file);
     const next = insertAtTopOfSection(current, item.section, bullet);
     await app.vault.modify(file, next);
-    return;
+    return path;
   }
 
   const seeded = insertAtTopOfSection("", item.section, bullet);
   await app.vault.create(path, seeded);
+  return path;
 }
 
 async function ensureParentFolder(app: App, path: string): Promise<void> {
