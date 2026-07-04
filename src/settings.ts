@@ -7,6 +7,7 @@ export interface ThoughtCaptureSettings {
   anthropicApiKey: string;
   thoughtsFilePath: string;
   showAnotherAfterSave: boolean;
+  openSavedFileAfterSave: boolean;
   lastUsedSection: Section;
   customAcronyms: string;
 }
@@ -16,6 +17,7 @@ export const DEFAULT_SETTINGS: ThoughtCaptureSettings = {
   anthropicApiKey: "",
   thoughtsFilePath: "09 Thoughts/Thoughts.md",
   showAnotherAfterSave: true,
+  openSavedFileAfterSave: true,
   lastUsedSection: "Self-Improvement",
   customAcronyms: "CalWORKs, VPSS, FJG",
 };
@@ -53,6 +55,16 @@ export class ThoughtCaptureSettingTab extends PluginSettingTab {
       .addToggle((t) =>
         t.setValue(this.plugin.settings.showAnotherAfterSave).onChange(async (v) => {
           this.plugin.settings.showAnotherAfterSave = v;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName("Open saved file after save")
+      .setDesc("After saving a thought, open the exact thoughts file that was changed.")
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.openSavedFileAfterSave).onChange(async (v) => {
+          this.plugin.settings.openSavedFileAfterSave = v;
           await this.plugin.saveSettings();
         })
       );

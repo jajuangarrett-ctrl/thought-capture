@@ -1,4 +1,4 @@
-import { App, ButtonComponent, Modal, Notice, Setting } from "obsidian";
+import { App, ButtonComponent, Modal, Notice, Setting, TFile } from "obsidian";
 import { appendThought } from "./append";
 import {
   copyEdit,
@@ -158,8 +158,9 @@ export class CaptureModal extends Modal {
       }
     }
 
+    let savedPath: string;
     try {
-      await appendThought(
+      savedPath = await appendThought(
         this.app,
         this.plugin.settings.thoughtsFilePath,
         { text: finalText, section: this.section }
@@ -172,13 +173,22 @@ export class CaptureModal extends Modal {
     this.plugin.settings.lastUsedSection = this.section;
     await this.plugin.saveSettings();
 
-    new Notice(`Saved to ${this.section}.`);
+    new Notice(`Saved to ${savedPath}.`);
 
     const reopen = forceAnother || this.plugin.settings.showAnotherAfterSave;
     this.close();
+    if (this.plugin.settings.openSavedFileAfterSave) {
+      await this.openSavedFile(savedPath);
+    }
     if (reopen) {
       setTimeout(() => new CaptureModal(this.app, this.plugin).open(), 200);
     }
+  }
+
+  private async openSavedFile(path: string): Promise<void> {
+    const file = this.app.vault.getAbstractFileByPath(path);
+    if (!(file instanceof TFile)) return;
+    await this.app.workspace.getLeaf(false).openFile(file);
   }
 
   onClose() {
