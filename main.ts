@@ -22,6 +22,10 @@ export default class ThoughtCapturePlugin extends Plugin {
       callback: () => new CaptureModal(this.app, this).open(),
     });
 
+    this.registerObsidianProtocolHandler("thought-capture", () => {
+      new CaptureModal(this.app, this).open();
+    });
+
     this.addSettingTab(new ThoughtCaptureSettingTab(this.app, this));
   }
 
