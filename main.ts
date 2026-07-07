@@ -11,22 +11,30 @@ export default class ThoughtCapturePlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+    const openCapture = () => new CaptureModal(this.app, this).open();
 
-    this.addRibbonIcon("lightbulb", "Capture thought", () => {
-      new CaptureModal(this.app, this).open();
-    });
+    this.addRibbonIcon("lightbulb", "Capture thought", openCapture);
 
     this.addCommand({
       id: "capture",
       name: "Capture thought",
-      callback: () => new CaptureModal(this.app, this).open(),
+      callback: openCapture,
     });
 
-    this.registerObsidianProtocolHandler("thought-capture", () => {
-      new CaptureModal(this.app, this).open();
+    this.registerObsidianProtocolHandler("thought-capture", openCapture);
+
+    this.app.workspace.onLayoutReady(() => {
+      this.recoverMissedAdvancedUriLaunch(openCapture);
     });
 
     this.addSettingTab(new ThoughtCaptureSettingTab(this.app, this));
+  }
+
+  private recoverMissedAdvancedUriLaunch(openCapture: () => void) {
+    const advancedUri = (this.app as any).plugins?.getPlugin?.("obsidian-advanced-uri");
+    if (advancedUri?.lastParameters?.commandid === `${this.manifest.id}:capture`) {
+      setTimeout(openCapture, 250);
+    }
   }
 
   async loadSettings() {
