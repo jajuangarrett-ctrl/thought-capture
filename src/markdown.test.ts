@@ -175,28 +175,18 @@ describe("insertAtTopOfSection", () => {
     expect(out).toContain("## AI Building Insights\n- 5/4/26 — new thought\n");
   });
 
-  it("repairs detached lines from legacy multiline captures", () => {
+  it("preserves custom headings and manually maintained content", () => {
     const existing =
       "---\ntype: thoughts-master\n---\n\n" +
       "## Self-Improvement\n" +
-      "- 5/3/26 — **A captured title**\n\n" +
-      "https://example.com\n\n" +
-      "> A quoted passage\n" +
-      "- a captured subpoint\n" +
-      "- 5/2/26 — an older thought\n\n" +
-      "## Professional Insights\n\n" +
-      "## Teaching Insights\n\n" +
-      "## AI Building Insights\n\n" +
-      "## Health & Wellness\n\n" +
-      "## Other\n";
+      "- 5/3/26 — A captured thought\n\n" +
+      "Manual standalone note\n\n" +
+      "## Custom Notes\n" +
+      "Keep this outside the capture\n";
     const out = insertAtTopOfSection(existing, "Professional Insights", bullet);
-    expect(out).toContain(
-      "- 5/3/26 — # A captured title\n\n" +
-        "  https://example.com\n\n" +
-        "  > A quoted passage\n" +
-        "  - a captured subpoint\n" +
-        "\n- 5/2/26 — an older thought\n"
-    );
+    expect(out).toContain("\nManual standalone note\n\n## Custom Notes\n");
+    expect(out).toContain("## Custom Notes\nKeep this outside the capture\n");
+    expect(out).not.toContain("  ## Custom Notes");
   });
 
   it("does not double-indent already formatted continuation lines", () => {

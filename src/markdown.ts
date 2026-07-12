@@ -72,10 +72,8 @@ function normalizeLineEndings(content: string): string {
 
 function normalizeLegacyBody(body: string): string {
   return separateCaptureBullets(
-    repairLegacyCaptureContinuations(
-      mergeDuplicateSections(
-        repairGluedSectionHeadings(stripDuplicateThoughtsFrontmatter(body))
-      )
+    mergeDuplicateSections(
+      repairGluedSectionHeadings(stripDuplicateThoughtsFrontmatter(body))
     )
   );
 }
@@ -152,38 +150,6 @@ function trimBlankLines(lines: string[]): string[] {
   return lines.slice(start, end);
 }
 
-/**
- * Older plugin builds wrote multiline captures without keeping continuation
- * lines inside their dated list item. Re-indent those lines so links,
- * paragraphs, quotes, and nested lists render as one thought in Obsidian.
- */
-function repairLegacyCaptureContinuations(body: string): string {
-  const lines = body.split("\n");
-  let insideCanonicalSection = false;
-  let insideCapture = false;
-
-  return lines
-    .map((line) => {
-      if (parseCanonicalSectionHeading(line)) {
-        insideCanonicalSection = true;
-        insideCapture = false;
-        return line;
-      }
-
-      if (!insideCanonicalSection) return line;
-
-      if (isDatedCaptureBullet(line)) {
-        insideCapture = true;
-        return normalizeDatedCaptureTitle(line);
-      }
-
-      if (!insideCapture || !line.trim()) return line;
-      if (/^(?: {2,}|\t)/.test(line)) return line;
-      return `  ${line}`;
-    })
-    .join("\n");
-}
-
 function isDatedCaptureBullet(line: string): boolean {
   return /^- \d{1,2}\/\d{1,2}\/\d{2} —(?:\s|$)/.test(line);
 }
@@ -215,12 +181,6 @@ function formatCapturedText(text: string): string {
   const first = formatCapturedTitle(rawFirst);
   if (rest.length === 0) return first;
   return [first, ...rest.map((line) => (line ? `  ${line}` : ""))].join("\n");
-}
-
-function normalizeDatedCaptureTitle(line: string): string {
-  const match = line.match(/^(- \d{1,2}\/\d{1,2}\/\d{2} — )(.*)$/);
-  if (!match) return line;
-  return `${match[1]}${formatCapturedTitle(match[2])}`;
 }
 
 function formatCapturedTitle(line: string): string {
