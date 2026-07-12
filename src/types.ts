@@ -2,6 +2,7 @@ export const SECTIONS = [
   "Self-Improvement",
   "Professional Insights",
   "Teaching Insights",
+  "AI Building Insights",
   "Health & Wellness",
   "Other",
 ] as const;

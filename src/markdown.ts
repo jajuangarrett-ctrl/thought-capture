@@ -70,8 +70,10 @@ function normalizeLineEndings(content: string): string {
 }
 
 function normalizeLegacyBody(body: string): string {
-  return mergeDuplicateSections(
-    repairGluedSectionHeadings(stripDuplicateThoughtsFrontmatter(body))
+  return repairLegacyCaptureContinuations(
+    mergeDuplicateSections(
+      repairGluedSectionHeadings(stripDuplicateThoughtsFrontmatter(body))
+    )
   );
 }
 
@@ -145,6 +147,42 @@ function trimBlankLines(lines: string[]): string[] {
   while (start < end && !lines[start].trim()) start++;
   while (end > start && !lines[end - 1].trim()) end--;
   return lines.slice(start, end);
+}
+
+/**
+ * Older plugin builds wrote multiline captures without keeping continuation
+ * lines inside their dated list item. Re-indent those lines so links,
+ * paragraphs, quotes, and nested lists render as one thought in Obsidian.
+ */
+function repairLegacyCaptureContinuations(body: string): string {
+  const lines = body.split("\n");
+  let insideCanonicalSection = false;
+  let insideCapture = false;
+
+  return lines
+    .map((line) => {
+      if (parseCanonicalSectionHeading(line)) {
+        insideCanonicalSection = true;
+        insideCapture = false;
+        return line;
+      }
+
+      if (!insideCanonicalSection) return line;
+
+      if (isDatedCaptureBullet(line)) {
+        insideCapture = true;
+        return line;
+      }
+
+      if (!insideCapture || !line.trim()) return line;
+      if (/^(?: {2,}|\t)/.test(line)) return line;
+      return `  ${line}`;
+    })
+    .join("\n");
+}
+
+function isDatedCaptureBullet(line: string): boolean {
+  return /^- \d{1,2}\/\d{1,2}\/\d{2} —(?:\s|$)/.test(line);
 }
 
 function formatCapturedText(text: string): string {

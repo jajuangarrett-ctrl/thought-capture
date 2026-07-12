@@ -26,12 +26,13 @@ describe("formatDate", () => {
 });
 
 describe("buildSkeleton", () => {
-  it("creates a file with frontmatter and all five section headings", () => {
+  it("creates a file with frontmatter and all six section headings", () => {
     expect(buildSkeleton()).toBe(
       "---\ntype: thoughts-master\n---\n\n" +
         "## Self-Improvement\n\n" +
         "## Professional Insights\n\n" +
         "## Teaching Insights\n\n" +
+        "## AI Building Insights\n\n" +
         "## Health & Wellness\n\n" +
         "## Other\n"
     );
@@ -69,6 +70,7 @@ describe("insertAtTopOfSection", () => {
         "## Self-Improvement\n- 5/4/26 — new thought\n\n" +
         "## Professional Insights\n\n" +
         "## Teaching Insights\n\n" +
+        "## AI Building Insights\n\n" +
         "## Health & Wellness\n\n" +
         "## Other\n"
     );
@@ -80,6 +82,7 @@ describe("insertAtTopOfSection", () => {
       "## Self-Improvement\n- 5/3/26 — earlier thought\n\n" +
       "## Professional Insights\n\n" +
       "## Teaching Insights\n\n" +
+      "## AI Building Insights\n\n" +
       "## Health & Wellness\n\n" +
       "## Other\n";
     expect(insertAtTopOfSection(existing, "Self-Improvement", bullet)).toBe(
@@ -87,6 +90,7 @@ describe("insertAtTopOfSection", () => {
         "## Self-Improvement\n- 5/4/26 — new thought\n- 5/3/26 — earlier thought\n\n" +
         "## Professional Insights\n\n" +
         "## Teaching Insights\n\n" +
+        "## AI Building Insights\n\n" +
         "## Health & Wellness\n\n" +
         "## Other\n"
     );
@@ -98,6 +102,7 @@ describe("insertAtTopOfSection", () => {
       "## Self-Improvement\n- 5/3/26 — alpha\n\n" +
       "## Professional Insights\n- 5/3/26 — beta\n\n" +
       "## Teaching Insights\n\n" +
+      "## AI Building Insights\n\n" +
       "## Health & Wellness\n\n" +
       "## Other\n";
     const out = insertAtTopOfSection(existing, "Professional Insights", bullet);
@@ -116,7 +121,7 @@ describe("insertAtTopOfSection", () => {
   it("preserves unrelated frontmatter keys", () => {
     const existing =
       "---\ntype: thoughts-master\nfoo: bar\n---\n\n" +
-      "## Self-Improvement\n\n## Professional Insights\n\n## Teaching Insights\n\n## Health & Wellness\n\n## Other\n";
+      "## Self-Improvement\n\n## Professional Insights\n\n## Teaching Insights\n\n## AI Building Insights\n\n## Health & Wellness\n\n## Other\n";
     const out = insertAtTopOfSection(existing, "Self-Improvement", bullet);
     expect(out.startsWith("---\ntype: thoughts-master\nfoo: bar\n---\n")).toBe(true);
     expect(out).toContain("## Self-Improvement\n- 5/4/26 — new thought\n");
@@ -124,7 +129,7 @@ describe("insertAtTopOfSection", () => {
 
   it("adds canonical frontmatter if the file has none", () => {
     const existing =
-      "## Self-Improvement\n\n## Professional Insights\n\n## Teaching Insights\n\n## Health & Wellness\n\n## Other\n";
+      "## Self-Improvement\n\n## Professional Insights\n\n## Teaching Insights\n\n## AI Building Insights\n\n## Health & Wellness\n\n## Other\n";
     const out = insertAtTopOfSection(existing, "Self-Improvement", bullet);
     expect(out.startsWith("---\ntype: thoughts-master\n---\n")).toBe(true);
     expect(out).toContain("## Self-Improvement\n- 5/4/26 — new thought\n");
@@ -143,7 +148,7 @@ describe("insertAtTopOfSection", () => {
     const existing =
       "---\ntype: thoughts-master\n---\n\n" +
       "## Self-Improvement\n- 5/3/26 — alpha\n- 5/2/26 — older\n\n" +
-      "## Professional Insights\n\n## Teaching Insights\n\n## Health & Wellness\n\n## Other\n";
+      "## Professional Insights\n\n## Teaching Insights\n\n## AI Building Insights\n\n## Health & Wellness\n\n## Other\n";
     const out = insertAtTopOfSection(existing, "Professional Insights", bullet);
     expect(out).toContain("- 5/3/26 — alpha\n- 5/2/26 — older\n");
   });
@@ -152,6 +157,49 @@ describe("insertAtTopOfSection", () => {
     const existing = buildSkeleton();
     const out = insertAtTopOfSection(existing, "Teaching Insights", bullet);
     expect(out).toContain("## Teaching Insights\n- 5/4/26 — new thought\n");
+  });
+
+  it("inserts into the AI Building Insights section", () => {
+    const existing = buildSkeleton();
+    const out = insertAtTopOfSection(existing, "AI Building Insights", bullet);
+    expect(out).toContain("## AI Building Insights\n- 5/4/26 — new thought\n");
+  });
+
+  it("repairs detached lines from legacy multiline captures", () => {
+    const existing =
+      "---\ntype: thoughts-master\n---\n\n" +
+      "## Self-Improvement\n" +
+      "- 5/3/26 — # A captured title\n\n" +
+      "https://example.com\n\n" +
+      "> A quoted passage\n" +
+      "- a captured subpoint\n" +
+      "- 5/2/26 — an older thought\n\n" +
+      "## Professional Insights\n\n" +
+      "## Teaching Insights\n\n" +
+      "## AI Building Insights\n\n" +
+      "## Health & Wellness\n\n" +
+      "## Other\n";
+    const out = insertAtTopOfSection(existing, "Professional Insights", bullet);
+    expect(out).toContain(
+      "- 5/3/26 — # A captured title\n\n" +
+        "  https://example.com\n\n" +
+        "  > A quoted passage\n" +
+        "  - a captured subpoint\n" +
+        "- 5/2/26 — an older thought\n"
+    );
+  });
+
+  it("does not double-indent already formatted continuation lines", () => {
+    const existing =
+      "---\ntype: thoughts-master\n---\n\n" +
+      "## Other\n" +
+      "- 5/3/26 — First paragraph\n\n" +
+      "  Existing continuation\n";
+    const out = insertAtTopOfSection(existing, "Other", bullet);
+    expect(out).toContain(
+      "- 5/3/26 — First paragraph\n\n  Existing continuation\n"
+    );
+    expect(out).not.toContain("    Existing continuation");
   });
 
   it("normalizes legacy duplicate frontmatter and glued section headings", () => {

@@ -146,7 +146,7 @@ function buildCopyEditSystemPrompt(ctx: CopyEditContext): string {
   const acronyms = ctx.acronyms.trim();
   return [
     "You copy-edit short personal notes a manager has captured as fleeting thoughts.",
-    "The notes fall into one of four buckets: self-improvement, professional insights, health & wellness, or other. The user has already chosen the bucket — do not classify or label.",
+    "The user has already chosen the note's section — do not classify or label it.",
     "Rules:",
     "- Remove filler words (um, uh, like, you know).",
     "- Fix grammar, punctuation, and obvious word-choice mistakes for clarity.",
