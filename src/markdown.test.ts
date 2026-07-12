@@ -59,6 +59,16 @@ describe("renderBullet", () => {
       "- 5/4/26 — Key takeaways\n  - first\n\n  plain follow-up\n\n"
     );
   });
+
+  it("formats a leading Markdown heading as an inline bold title", () => {
+    const item: ThoughtItem = {
+      section: "AI Building Insights",
+      text: "# Agent design lesson\nKeep tools narrowly scoped",
+    };
+    expect(renderBullet(item, MAY_4)).toBe(
+      "- 5/4/26 — **Agent design lesson**\n  Keep tools narrowly scoped\n\n"
+    );
+  });
 });
 
 describe("insertAtTopOfSection", () => {
@@ -169,7 +179,7 @@ describe("insertAtTopOfSection", () => {
     const existing =
       "---\ntype: thoughts-master\n---\n\n" +
       "## Self-Improvement\n" +
-      "- 5/3/26 — # A captured title\n\n" +
+      "- 5/3/26 — **A captured title**\n\n" +
       "https://example.com\n\n" +
       "> A quoted passage\n" +
       "- a captured subpoint\n" +

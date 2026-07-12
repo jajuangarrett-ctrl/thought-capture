@@ -174,7 +174,7 @@ function repairLegacyCaptureContinuations(body: string): string {
 
       if (isDatedCaptureBullet(line)) {
         insideCapture = true;
-        return line;
+        return normalizeDatedCaptureTitle(line);
       }
 
       if (!insideCapture || !line.trim()) return line;
@@ -211,9 +211,21 @@ function asCaptureBlock(bullet: string): string {
 
 function formatCapturedText(text: string): string {
   const normalized = normalizeLineEndings(text).trim();
-  const [first = "", ...rest] = normalized.split("\n");
+  const [rawFirst = "", ...rest] = normalized.split("\n");
+  const first = formatCapturedTitle(rawFirst);
   if (rest.length === 0) return first;
   return [first, ...rest.map((line) => (line ? `  ${line}` : ""))].join("\n");
+}
+
+function normalizeDatedCaptureTitle(line: string): string {
+  const match = line.match(/^(- \d{1,2}\/\d{1,2}\/\d{2} — )(.*)$/);
+  if (!match) return line;
+  return `${match[1]}${formatCapturedTitle(match[2])}`;
+}
+
+function formatCapturedTitle(line: string): string {
+  const match = line.match(/^#{1,6}[ \t]+(.+?)\s*$/);
+  return match ? `**${match[1]}**` : line;
 }
 
 function escapeRegex(s: string): string {
