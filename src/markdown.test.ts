@@ -42,12 +42,12 @@ describe("buildSkeleton", () => {
 describe("renderBullet", () => {
   it("renders a bullet with the captured date and text", () => {
     const item: ThoughtItem = { section: "Self-Improvement", text: "Read 30 min daily" };
-    expect(renderBullet(item, MAY_4)).toBe("- 5/4/26 — Read 30 min daily\n");
+    expect(renderBullet(item, MAY_4)).toBe("- 5/4/26 — Read 30 min daily\n\n");
   });
 
   it("trims whitespace from the text", () => {
     const item: ThoughtItem = { section: "Other", text: "  spacy thought  " };
-    expect(renderBullet(item, MAY_4)).toBe("- 5/4/26 — spacy thought\n");
+    expect(renderBullet(item, MAY_4)).toBe("- 5/4/26 — spacy thought\n\n");
   });
 
   it("indents multiline text so it stays inside one thought bullet", () => {
@@ -56,13 +56,13 @@ describe("renderBullet", () => {
       text: "Key takeaways\n- first\n\nplain follow-up",
     };
     expect(renderBullet(item, MAY_4)).toBe(
-      "- 5/4/26 — Key takeaways\n  - first\n\n  plain follow-up\n"
+      "- 5/4/26 — Key takeaways\n  - first\n\n  plain follow-up\n\n"
     );
   });
 });
 
 describe("insertAtTopOfSection", () => {
-  const bullet = "- 5/4/26 — new thought\n";
+  const bullet = "- 5/4/26 — new thought\n\n";
 
   it("creates skeleton + bullet under the chosen section when file is empty", () => {
     expect(insertAtTopOfSection("", "Self-Improvement", bullet)).toBe(
@@ -87,7 +87,7 @@ describe("insertAtTopOfSection", () => {
       "## Other\n";
     expect(insertAtTopOfSection(existing, "Self-Improvement", bullet)).toBe(
       "---\ntype: thoughts-master\n---\n\n" +
-        "## Self-Improvement\n- 5/4/26 — new thought\n- 5/3/26 — earlier thought\n\n" +
+        "## Self-Improvement\n- 5/4/26 — new thought\n\n- 5/3/26 — earlier thought\n\n" +
         "## Professional Insights\n\n" +
         "## Teaching Insights\n\n" +
         "## AI Building Insights\n\n" +
@@ -107,7 +107,7 @@ describe("insertAtTopOfSection", () => {
       "## Other\n";
     const out = insertAtTopOfSection(existing, "Professional Insights", bullet);
     expect(out).toContain(
-      "## Professional Insights\n- 5/4/26 — new thought\n- 5/3/26 — beta\n"
+      "## Professional Insights\n- 5/4/26 — new thought\n\n- 5/3/26 — beta\n"
     );
     expect(out).toContain("## Self-Improvement\n- 5/3/26 — alpha\n");
   });
@@ -150,7 +150,7 @@ describe("insertAtTopOfSection", () => {
       "## Self-Improvement\n- 5/3/26 — alpha\n- 5/2/26 — older\n\n" +
       "## Professional Insights\n\n## Teaching Insights\n\n## AI Building Insights\n\n## Health & Wellness\n\n## Other\n";
     const out = insertAtTopOfSection(existing, "Professional Insights", bullet);
-    expect(out).toContain("- 5/3/26 — alpha\n- 5/2/26 — older\n");
+    expect(out).toContain("- 5/3/26 — alpha\n\n- 5/2/26 — older\n");
   });
 
   it("inserts into the Teaching Insights section", () => {
@@ -185,7 +185,7 @@ describe("insertAtTopOfSection", () => {
         "  https://example.com\n\n" +
         "  > A quoted passage\n" +
         "  - a captured subpoint\n" +
-        "- 5/2/26 — an older thought\n"
+        "\n- 5/2/26 — an older thought\n"
     );
   });
 
@@ -213,7 +213,7 @@ describe("insertAtTopOfSection", () => {
     expect(out.match(/^## Other$/gm)).toHaveLength(1);
     expect(out).not.toContain("## Other-");
     expect(out).toContain(
-      "## Other\n- 5/4/26 — new thought\n- 6/26/26 — glued thought\n\n- 6/30/26 — later thought\n"
+      "## Other\n- 5/4/26 — new thought\n\n- 6/26/26 — glued thought\n\n- 6/30/26 — later thought\n"
     );
   });
 });

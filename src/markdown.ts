@@ -16,7 +16,7 @@ export function buildSkeleton(): string {
 }
 
 export function renderBullet(item: ThoughtItem, capturedAt: Date): string {
-  return `- ${formatDate(capturedAt)} — ${formatCapturedText(item.text)}\n`;
+  return `- ${formatDate(capturedAt)} — ${formatCapturedText(item.text)}\n\n`;
 }
 
 export function insertAtTopOfSection(
@@ -33,11 +33,12 @@ export function insertAtTopOfSection(
   if (match) {
     const idx = match.index + match[0].length;
     const insertAt = body.charAt(idx) === "\n" ? idx + 1 : idx;
-    return frontmatter + body.slice(0, insertAt) + bullet + body.slice(insertAt);
+    const remainder = body.slice(insertAt).replace(/^\n+/, "");
+    return frontmatter + body.slice(0, insertAt) + asCaptureBlock(bullet) + remainder;
   }
 
   const trailing = body.endsWith("\n") ? "" : "\n";
-  return `${frontmatter}${body}${trailing}\n${headingText}\n${bullet}`;
+  return `${frontmatter}${body}${trailing}\n${headingText}\n${asCaptureBlock(bullet)}`;
 }
 
 function ensureSkeleton(content: string): string {
@@ -70,9 +71,11 @@ function normalizeLineEndings(content: string): string {
 }
 
 function normalizeLegacyBody(body: string): string {
-  return repairLegacyCaptureContinuations(
-    mergeDuplicateSections(
-      repairGluedSectionHeadings(stripDuplicateThoughtsFrontmatter(body))
+  return separateCaptureBullets(
+    repairLegacyCaptureContinuations(
+      mergeDuplicateSections(
+        repairGluedSectionHeadings(stripDuplicateThoughtsFrontmatter(body))
+      )
     )
   );
 }
@@ -183,6 +186,27 @@ function repairLegacyCaptureContinuations(body: string): string {
 
 function isDatedCaptureBullet(line: string): boolean {
   return /^- \d{1,2}\/\d{1,2}\/\d{2} —(?:\s|$)/.test(line);
+}
+
+function separateCaptureBullets(body: string): string {
+  const output: string[] = [];
+  for (const line of body.split("\n")) {
+    const previous = output[output.length - 1];
+    if (
+      isDatedCaptureBullet(line) &&
+      previous !== undefined &&
+      previous.trim() &&
+      !parseCanonicalSectionHeading(previous)
+    ) {
+      output.push("");
+    }
+    output.push(line);
+  }
+  return output.join("\n");
+}
+
+function asCaptureBlock(bullet: string): string {
+  return `${bullet.replace(/\n+$/, "")}\n\n`;
 }
 
 function formatCapturedText(text: string): string {
