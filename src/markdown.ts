@@ -3,20 +3,13 @@ import type { Section, ThoughtItem } from "./types";
 
 const FRONTMATTER = "---\ntype: thoughts-master\n---";
 
-export function formatDate(d: Date): string {
-  const m = d.getMonth() + 1;
-  const day = d.getDate();
-  const yy = d.getFullYear() % 100;
-  return `${m}/${day}/${yy.toString().padStart(2, "0")}`;
-}
-
 export function buildSkeleton(): string {
   const headings = SECTIONS.map((s) => `## ${s}\n`).join("\n");
   return `${FRONTMATTER}\n\n${headings}`;
 }
 
-export function renderBullet(item: ThoughtItem, capturedAt: Date): string {
-  return `- ${formatDate(capturedAt)} — ${formatCapturedText(item.text)}\n\n`;
+export function renderBullet(item: ThoughtItem): string {
+  return `- ${formatCapturedText(item.text)}\n\n`;
 }
 
 export function insertAtTopOfSection(
@@ -71,9 +64,11 @@ function normalizeLineEndings(content: string): string {
 }
 
 function normalizeLegacyBody(body: string): string {
-  return separateCaptureBullets(
-    mergeDuplicateSections(
-      repairGluedSectionHeadings(stripDuplicateThoughtsFrontmatter(body))
+  return stripLegacyCaptureDates(
+    separateCaptureBullets(
+      mergeDuplicateSections(
+        repairGluedSectionHeadings(stripDuplicateThoughtsFrontmatter(body))
+      )
     )
   );
 }
@@ -150,8 +145,15 @@ function trimBlankLines(lines: string[]): string[] {
   return lines.slice(start, end);
 }
 
-function isDatedCaptureBullet(line: string): boolean {
-  return /^- \d{1,2}\/\d{1,2}\/\d{2} —(?:\s|$)/.test(line);
+function stripLegacyCaptureDates(body: string): string {
+  return body.replace(
+    /^- \d{1,2}\/\d{1,2}\/\d{2} —[ \t]*/gm,
+    "- "
+  );
+}
+
+function isCaptureBullet(line: string): boolean {
+  return /^- /.test(line);
 }
 
 function separateCaptureBullets(body: string): string {
@@ -159,7 +161,7 @@ function separateCaptureBullets(body: string): string {
   for (const line of body.split("\n")) {
     const previous = output[output.length - 1];
     if (
-      isDatedCaptureBullet(line) &&
+      isCaptureBullet(line) &&
       previous !== undefined &&
       previous.trim() &&
       !parseCanonicalSectionHeading(previous)

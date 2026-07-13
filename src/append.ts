@@ -5,12 +5,11 @@ import type { ThoughtItem } from "./types";
 export async function appendThought(
   app: App,
   filePath: string,
-  item: ThoughtItem,
-  capturedAt: Date = new Date()
+  item: ThoughtItem
 ): Promise<string> {
   const path = normalizePath(filePath);
   await ensureParentFolder(app, path);
-  const bullet = renderBullet(item, capturedAt);
+  const bullet = renderBullet(item);
   const file = app.vault.getAbstractFileByPath(path);
 
   if (file instanceof TFile) {
